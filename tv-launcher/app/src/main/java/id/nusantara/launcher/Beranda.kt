@@ -1,11 +1,17 @@
 package id.nusantara.launcher
 
 import android.accessibilityservice.AccessibilityService
+import android.app.Activity
+import android.app.AlertDialog
+import android.app.role.RoleManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.os.Build
+import android.provider.Settings
 import android.view.accessibility.AccessibilityEvent
+import android.widget.Toast
 
 /** Hal-hal seputar status "beranda utama": siapa launcher bawaan TV dan apakah launcher ini yang aktif. */
 object Beranda {
@@ -27,6 +33,71 @@ object Beranda {
     fun iniUtama(konteks: Context): Boolean {
         val pilihan = konteks.packageManager.resolveActivity(maksudBeranda(), PackageManager.MATCH_DEFAULT_ONLY)
         return pilihan?.activityInfo?.packageName == konteks.packageName
+    }
+
+    private fun buka(layar: Activity, tujuan: Intent): Boolean {
+        return try {
+            layar.startActivity(tujuan)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun pesan(layar: Activity, isi: String) {
+        Toast.makeText(layar, isi, Toast.LENGTH_LONG).show()
+    }
+
+    /** Android tidak mengizinkan aplikasi menjadikan dirinya beranda diam-diam; pengguna yang menyetujui. */
+    fun jadikanUtama(layar: Activity, simpanan: Simpanan) {
+        // Cara resmi di Android 10 ke atas: sistem menampilkan dialog persetujuan
+        if (Build.VERSION.SDK_INT >= 29) {
+            val peran = layar.getSystemService(RoleManager::class.java)
+            if (peran != null && peran.isRoleAvailable(RoleManager.ROLE_HOME) && !peran.isRoleHeld(RoleManager.ROLE_HOME)) {
+                try {
+                    layar.startActivityForResult(peran.createRequestRoleIntent(RoleManager.ROLE_HOME), 7)
+                    return
+                } catch (e: Exception) {
+                    // lanjut ke cara berikutnya
+                }
+            }
+        }
+        // Layar "aplikasi Beranda" di pengaturan TV
+        if (buka(layar, Intent(Settings.ACTION_HOME_SETTINGS))) {
+            pesan(layar, "Pilih Nusantara Launcher sebagai aplikasi Beranda")
+            return
+        }
+        // TV mengunci launcher pabrikan: tawarkan pengalih tombol Home
+        AlertDialog.Builder(layar)
+            .setTitle("TV ini tidak menyediakan pilihan launcher")
+            .setMessage(
+                "Nyalakan \"Pengalih tombol Home\" milik Nusantara Launcher di menu Aksesibilitas. " +
+                    "Setelah itu tombol Home membuka launcher ini. Pengalih bisa dimatikan kapan saja."
+            )
+            .setPositiveButton("Buka Aksesibilitas") { _, _ ->
+                simpanan.alihkanHome = true
+                if (!buka(layar, Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))) pesan(layar, "Menu Aksesibilitas tidak bisa dibuka")
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    /** Mengembalikan TV ke launcher bawaannya. */
+    fun kembalikanBawaan(layar: Activity, simpanan: Simpanan) {
+        simpanan.alihkanHome = false
+        if (buka(layar, Intent(Settings.ACTION_HOME_SETTINGS))) {
+            pesan(layar, "Pilih launcher bawaan TV sebagai aplikasi Beranda")
+            return
+        }
+        @Suppress("DEPRECATION")
+        layar.packageManager.clearPackagePreferredActivities(layar.packageName)
+        val bawaan = lain(layar).firstOrNull()
+        if (bawaan == null) {
+            pesan(layar, "Launcher bawaan tidak ditemukan di TV ini")
+            return
+        }
+        val tujuan = maksudBeranda().setClassName(bawaan.packageName, bawaan.name).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (!buka(layar, tujuan)) pesan(layar, "Launcher bawaan tidak bisa dibuka")
     }
 }
 

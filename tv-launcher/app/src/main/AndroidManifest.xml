@@ -46,6 +46,11 @@
         </activity>
 
         <activity
+            android:name=".PengaturanActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+
+        <activity
             android:name=".LokasiActivity"
             android:exported="false"
             android:screenOrientation="landscape" />

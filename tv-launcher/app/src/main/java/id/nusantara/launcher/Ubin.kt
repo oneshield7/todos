@@ -287,6 +287,9 @@ object Bunyi {
     /** Diset benar saat ubin sedang disusun ulang, supaya fokus otomatis tidak ikut berbunyi. */
     var senyap = false
 
+    /** Mengikuti pilihan pengguna di pengaturan launcher. */
+    var aktif = true
+
     fun siapkan(konteks: Context) {
         if (audio != null) return
         audio = konteks.applicationContext.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
@@ -294,10 +297,10 @@ object Bunyi {
     }
 
     fun pindah() {
-        if (!senyap) audio?.playSoundEffect(AudioManager.FX_FOCUS_NAVIGATION_RIGHT, -1f)
+        if (aktif && !senyap) audio?.playSoundEffect(AudioManager.FX_FOCUS_NAVIGATION_RIGHT, -1f)
     }
 
     fun pilih() {
-        audio?.playSoundEffect(AudioManager.FX_KEY_CLICK, -1f)
+        if (aktif) audio?.playSoundEffect(AudioManager.FX_KEY_CLICK, -1f)
     }
 }

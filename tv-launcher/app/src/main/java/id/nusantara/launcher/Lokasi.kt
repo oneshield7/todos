@@ -94,6 +94,27 @@ class Simpanan(context: Context) {
             prefs.edit().putBoolean("alihkan_home", nilai).apply()
         }
 
+    /** Animasi cuaca di latar. */
+    var animasi: Boolean
+        get() = prefs.getBoolean("animasi", true)
+        set(nilai) {
+            prefs.edit().putBoolean("animasi", nilai).apply()
+        }
+
+    /** Bunyi saat berpindah dan memilih ubin. */
+    var bunyi: Boolean
+        get() = prefs.getBoolean("bunyi", true)
+        set(nilai) {
+            prefs.edit().putBoolean("bunyi", nilai).apply()
+        }
+
+    /** Latar laci aplikasi: 0 bening, 1 sedang, 2 gelap. */
+    var beningLaci: Int
+        get() = prefs.getInt("bening_laci", 1).coerceIn(0, 2)
+        set(nilai) {
+            prefs.edit().putInt("bening_laci", nilai).apply()
+        }
+
     /** Salah sampai daftar sematan pertama kali disimpan. */
     val favoritDiatur: Boolean
         get() = prefs.contains("favorit")

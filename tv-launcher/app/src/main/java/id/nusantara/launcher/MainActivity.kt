@@ -2,7 +2,6 @@ package id.nusantara.launcher
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.app.role.RoleManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -10,7 +9,6 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.media.tv.TvContract
 import android.media.tv.TvInputManager
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -54,6 +52,7 @@ class MainActivity : Activity() {
     private lateinit var redup: View
     private lateinit var laci: FrameLayout
     private lateinit var kisi: LinearLayout
+    private val latarLaci = GradientDrawable()
 
     private val penangan = Handler(Looper.getMainLooper())
     private val pekerja = Executors.newSingleThreadExecutor()
@@ -179,16 +178,12 @@ class MainActivity : Activity() {
 
         // Lapisan peredup dan laci aplikasi, keduanya di atas beranda
         redup = View(this)
-        redup.setBackgroundColor(Color.argb(60, 9, 18, 20))
         redup.alpha = 0f
         akar.addView(redup, FrameLayout.LayoutParams(penuh, penuh))
 
         tinggiLaci = (resources.displayMetrics.heightPixels * 0.8f).toInt()
         laci = FrameLayout(this)
-        val latarLaci = GradientDrawable()
-        // Tembus pandang: latar beranda tetap terlihat di balik laci. Sedikit gelap dipertahankan
-        // supaya judul dan nama aplikasi masih terbaca di atas langit siang yang terang.
-        latarLaci.setColor(Color.argb(140, 9, 18, 20))
+        // Tembus pandang: latar beranda tetap terlihat di balik laci; warnanya diatur terapkanPengaturan()
         val sudut = 36f * u
         latarLaci.cornerRadii = floatArrayOf(sudut, sudut, sudut, sudut, 0f, 0f, 0f, 0f)
         laci.background = latarLaci
@@ -236,6 +231,7 @@ class MainActivity : Activity() {
     override fun onStart() {
         super.onStart()
         latar.aktif = true
+        terapkanPengaturan()
         terapkanLokasi()
         penangan.post(detak)
         muatAplikasi()
@@ -289,7 +285,7 @@ class MainActivity : Activity() {
                 return true
             }
             KeyEvent.KEYCODE_MENU -> {
-                menuLauncher()
+                bukaPengaturanLauncher()
                 return true
             }
             KeyEvent.KEYCODE_SETTINGS -> {
@@ -332,23 +328,18 @@ class MainActivity : Activity() {
 
     // ---- Pengaturan launcher ----
 
-    private fun menuLauncher() {
-        val utama = Beranda.iniUtama(this)
-        val pilihan = arrayOf(
-            "Pengaturan TV",
-            "Ubah lokasi",
-            if (utama) "Kembalikan launcher bawaan" else "Jadikan beranda utama",
-        )
-        AlertDialog.Builder(this)
-            .setTitle("Pengaturan")
-            .setItems(pilihan) { _, nomor ->
-                when (nomor) {
-                    0 -> bukaPengaturanTv()
-                    1 -> bukaAtauPesan(Intent(this, LokasiActivity::class.java))
-                    else -> if (utama) kembalikanBawaan() else jadikanBerandaUtama()
-                }
-            }
-            .show()
+    private fun bukaPengaturanLauncher() {
+        bukaAtauPesan(Intent(this, PengaturanActivity::class.java))
+    }
+
+    /** Pilihan dari layar pengaturan: animasi, bunyi, dan seberapa bening laci aplikasi. */
+    private fun terapkanPengaturan() {
+        latar.animasi = simpanan.animasi
+        Bunyi.aktif = simpanan.bunyi
+        val tingkat = simpanan.beningLaci
+        // Sedikit gelap selalu dipertahankan supaya judul dan nama aplikasi tetap terbaca
+        latarLaci.setColor(Color.argb(intArrayOf(90, 140, 205)[tingkat], 9, 18, 20))
+        redup.setBackgroundColor(Color.argb(intArrayOf(40, 60, 100)[tingkat], 9, 18, 20))
     }
 
     /** Ditawarkan sekali, setelah lokasi dipilih, bila launcher ini belum menjadi beranda utama. */
@@ -359,66 +350,11 @@ class MainActivity : Activity() {
             .setTitle("Jadikan beranda utama?")
             .setMessage(
                 "Tombol Home akan membuka Nusantara Launcher, sehingga beranda bawaan TV beserta iklannya tidak tampil lagi. " +
-                    "Bisa dikembalikan kapan saja lewat ubin Pengaturan."
+                    "Bisa dikembalikan kapan saja lewat Pengaturan launcher."
             )
-            .setPositiveButton("Jadikan") { _, _ -> jadikanBerandaUtama() }
+            .setPositiveButton("Jadikan") { _, _ -> Beranda.jadikanUtama(this, simpanan) }
             .setNegativeButton("Nanti", null)
             .show()
-    }
-
-    /** Android tidak mengizinkan aplikasi menjadikan dirinya beranda diam-diam; pengguna yang menyetujui. */
-    private fun jadikanBerandaUtama() {
-        // Cara resmi di Android 10 ke atas: sistem menampilkan dialog persetujuan
-        if (Build.VERSION.SDK_INT >= 29) {
-            val peran = getSystemService(RoleManager::class.java)
-            if (peran != null && peran.isRoleAvailable(RoleManager.ROLE_HOME) && !peran.isRoleHeld(RoleManager.ROLE_HOME)) {
-                try {
-                    startActivityForResult(peran.createRequestRoleIntent(RoleManager.ROLE_HOME), MINTA_BERANDA)
-                    return
-                } catch (e: Exception) {
-                    // lanjut ke cara berikutnya
-                }
-            }
-        }
-        // Layar "aplikasi Beranda" di pengaturan TV
-        if (buka(Intent(Settings.ACTION_HOME_SETTINGS))) {
-            pesan("Pilih Nusantara Launcher sebagai aplikasi Beranda")
-            return
-        }
-        // TV mengunci launcher pabrikan: tawarkan pengalih tombol Home
-        AlertDialog.Builder(this)
-            .setTitle("TV ini tidak menyediakan pilihan launcher")
-            .setMessage(
-                "Nyalakan \"Pengalih tombol Home\" milik Nusantara Launcher di menu Aksesibilitas. " +
-                    "Setelah itu tombol Home membuka launcher ini. Pengalih bisa dimatikan kapan saja."
-            )
-            .setPositiveButton("Buka Aksesibilitas") { _, _ ->
-                simpanan.alihkanHome = true
-                bukaAtauPesan(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-            }
-            .setNegativeButton("Batal", null)
-            .show()
-    }
-
-    /** Mengembalikan TV ke launcher bawaannya. */
-    private fun kembalikanBawaan() {
-        simpanan.alihkanHome = false
-        if (buka(Intent(Settings.ACTION_HOME_SETTINGS))) {
-            pesan("Pilih launcher bawaan TV sebagai aplikasi Beranda")
-            return
-        }
-        @Suppress("DEPRECATION")
-        packageManager.clearPackagePreferredActivities(packageName)
-        val bawaan = Beranda.lain(this).firstOrNull()
-        if (bawaan == null) {
-            pesan("Launcher bawaan tidak ditemukan di TV ini")
-            return
-        }
-        bukaAtauPesan(
-            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
-                .setClassName(bawaan.packageName, bawaan.name)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        )
     }
 
     /** Daftar sumber input TV (HDMI, AV, dan sejenisnya) yang dilaporkan sistem. */
@@ -583,7 +519,7 @@ class MainActivity : Activity() {
         }
         bawaan("Semua aplikasi", GambarBawaan.Jenis.SEMUA, "#35566B", "#BFD9E6") { bukaLaci() }
         bawaan("Input", GambarBawaan.Jenis.INPUT, "#2F6A50", "#DCE7E4") { pilihInput() }
-        bawaan("Pengaturan", GambarBawaan.Jenis.PENGATURAN, "#3E575B", "#DCE7E4") { menuLauncher() }
+        bawaan("Pengaturan launcher", GambarBawaan.Jenis.PENGATURAN, "#3E575B", "#DCE7E4") { bukaPengaturanLauncher() }
 
         if (!laciTerbuka) fokusBaris()
     }
@@ -600,14 +536,25 @@ class MainActivity : Activity() {
         kisi.removeAllViews()
         val ukuran = ViewGroup.LayoutParams.WRAP_CONTENT
         var barisKisi: LinearLayout? = null
-        for ((nomor, aplikasi) in semua.withIndex()) {
-            if (nomor % KOLOM == 0) {
-                barisKisi = LinearLayout(this)
-                barisKisi.orientation = LinearLayout.HORIZONTAL
-                barisKisi.clipChildren = false
-                barisKisi.clipToPadding = false
-                kisi.addView(barisKisi, LinearLayout.LayoutParams(ukuran, ukuran).apply { bottomMargin = px(4f) })
+        var terisi = 0
+
+        // Menaruh ubin di kisi; baris baru dibuat tiap tujuh ubin
+        fun taruh(ubin: Ubin) {
+            if (terisi % KOLOM == 0) {
+                val baru = LinearLayout(this)
+                baru.orientation = LinearLayout.HORIZONTAL
+                baru.clipChildren = false
+                baru.clipToPadding = false
+                kisi.addView(baru, LinearLayout.LayoutParams(ukuran, ukuran).apply { bottomMargin = px(4f) })
+                barisKisi = baru
             }
+            barisKisi?.addView(ubin, LinearLayout.LayoutParams(ukuran, ukuran).apply {
+                rightMargin = if (terisi % KOLOM == KOLOM - 1) 0 else px(8f)
+            })
+            terisi++
+        }
+
+        for (aplikasi in semua) {
             val ubin = ubinAplikasi(aplikasi, LEBAR_UBIN_LACI)
             ubin.tag = aplikasi.paket
             ubin.setOnLongClickListener {
@@ -615,10 +562,19 @@ class MainActivity : Activity() {
                 tandaiSematan()
                 true
             }
-            barisKisi?.addView(ubin, LinearLayout.LayoutParams(ukuran, ukuran).apply {
-                rightMargin = if (nomor % KOLOM == KOLOM - 1) 0 else px(8f)
-            })
+            taruh(ubin)
         }
+
+        // Pengaturan launcher juga ada di sini, di ujung daftar aplikasi
+        val ubinAtur = Ubin(this, u, tema.aksen, "Pengaturan launcher", LEBAR_UBIN_LACI)
+        ubinAtur.gambar.setImageDrawable(
+            GambarBawaan(GambarBawaan.Jenis.PENGATURAN, Color.parseColor("#3E575B"), Color.parseColor("#DCE7E4"), tema.aksen)
+        )
+        ubinAtur.setOnClickListener {
+            Bunyi.pilih()
+            bukaPengaturanLauncher()
+        }
+        taruh(ubinAtur)
         tandaiSematan()
     }
 
@@ -666,7 +622,6 @@ class MainActivity : Activity() {
     }
 
     companion object {
-        private const val MINTA_BERANDA = 7
         private const val KOLOM = 7
 
         /** Lebar ubin laci pada layar 1920: tujuh kolom tepat mengisi dari tepi kiri sampai tepi kanan. */

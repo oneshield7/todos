@@ -2,7 +2,7 @@
 
 Launcher Android TV yang latarnya mengikuti lokasi dan cuaca. Ditulis dengan Kotlin native, tanpa framework.
 
-## Yang sudah ada di versi 0.3
+## Yang sudah ada di versi 0.4
 
 - Beranda: jam dengan detik, tanggal, suhu, kondisi cuaca, nama kota, dan satu baris aplikasi yang disematkan (paling banyak 8).
 - Laci aplikasi: tombol bawah (atau ubin "Semua aplikasi") menggeser laci naik dari bawah dengan latar tembus pandang; kisi tujuh kolom mengisi lebar layar. Tombol Kembali, atau tombol atas di baris teratas, menutupnya.
@@ -10,7 +10,7 @@ Launcher Android TV yang latarnya mengikuti lokasi dan cuaca. Ditulis dengan Kot
 - Ubin aplikasi memakai banner asli aplikasi yang memenuhi ubin; nama hanya muncul pada ubin terpilih.
 - Layar lokasi dengan dua pilihan: deteksi otomatis dari jaringan internet (tanpa GPS, dengan persetujuan atas hasilnya) atau pilih sendiri dari 38 ibu kota provinsi dan pencarian.
 - Beranda utama: saat pertama dipakai, launcher menawarkan diri menjadi beranda utama lewat dialog resmi Android. Bila TV tidak menyediakan pilihan launcher, tersedia "Pengalih tombol Home" (layanan aksesibilitas yang dinyalakan pengguna sendiri).
-- Ubin Pengaturan berisi: Pengaturan TV, Ubah lokasi, dan Jadikan beranda utama atau Kembalikan launcher bawaan.
+- Layar Pengaturan launcher (ubin di beranda, ubin di ujung laci aplikasi, atau tombol Menu di remote): lokasi, beranda utama atau kembali ke launcher bawaan, animasi cuaca, bunyi navigasi, tingkat bening laci aplikasi, dan pintasan ke Pengaturan TV.
 - Tombol remote Menu, Pengaturan, Input, dan Semua aplikasi diteruskan ke fungsi yang sesuai. Tombol lain yang belum punya fungsi memunculkan pesan berisi nama tombolnya, sebagai bantuan selama masa uji.
 - Bunyi saat berpindah dan memilih ubin.
 - Latar bergambar untuk DK Jakarta (Monas), Jawa Barat, DI Yogyakarta (Prambanan), Bali, Sumatera Selatan, Kalimantan Selatan, Sulawesi Selatan, dan Papua Pegunungan. Provinsi lain memakai bentang alam umum (pegunungan, pesisir, atau perkotaan).
