@@ -46,13 +46,22 @@
         </activity>
 
         <activity
-            android:name=".SemuaActivity"
-            android:exported="false"
-            android:screenOrientation="landscape" />
-
-        <activity
             android:name=".LokasiActivity"
             android:exported="false"
             android:screenOrientation="landscape" />
+
+        <!-- Pengalih tombol Home; hanya berjalan bila pengguna menyalakannya di menu Aksesibilitas -->
+        <service
+            android:name=".PengalihHome"
+            android:exported="true"
+            android:label="@string/pengalih_nama"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/pengalih_home" />
+        </service>
     </application>
 </manifest>

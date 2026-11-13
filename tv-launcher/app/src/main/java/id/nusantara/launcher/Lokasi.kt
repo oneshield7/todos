@@ -80,6 +80,20 @@ class Simpanan(context: Context) {
                 .apply()
         }
 
+    /** Benar setelah pengguna pernah ditawari menjadikan launcher ini beranda utama. */
+    var sudahTanyaBeranda: Boolean
+        get() = prefs.getBoolean("tanya_beranda", false)
+        set(nilai) {
+            prefs.edit().putBoolean("tanya_beranda", nilai).apply()
+        }
+
+    /** Benar bila tombol Home dialihkan ke launcher ini lewat layanan aksesibilitas. */
+    var alihkanHome: Boolean
+        get() = prefs.getBoolean("alihkan_home", false)
+        set(nilai) {
+            prefs.edit().putBoolean("alihkan_home", nilai).apply()
+        }
+
     /** Salah sampai daftar sematan pertama kali disimpan. */
     val favoritDiatur: Boolean
         get() = prefs.contains("favorit")

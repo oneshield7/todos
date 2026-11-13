@@ -62,6 +62,27 @@ object Layanan {
         else -> Kondisi.BERAWAN
     }
 
+    /**
+     * Memperkirakan lokasi dari alamat internet TV, tanpa GPS. Hasilnya setingkat kota
+     * dan bisa meleset, jadi pemanggil harus meminta persetujuan pengguna.
+     */
+    fun deteksi(): Lokasi {
+        var galat: Exception? = null
+        for (alamat in listOf("https://ipwho.is/", "https://get.geojs.io/v1/ip/geo.json")) {
+            try {
+                val o = JSONObject(ambil(alamat))
+                val kota = o.optString("city")
+                val lat = o.optString("latitude").toDoubleOrNull()
+                val lon = o.optString("longitude").toDoubleOrNull()
+                if (kota.isBlank() || lat == null || lon == null) continue
+                return Lokasi(kota, PetaTema.namaProvinsi(o.optString("region")), lat, lon)
+            } catch (e: Exception) {
+                galat = e
+            }
+        }
+        throw galat ?: IOException("Lokasi tidak ditemukan")
+    }
+
     /** Mencari kota atau kabupaten di Indonesia berdasarkan nama. */
     fun cari(kata: String): List<Lokasi> {
         val alamat = "https://geocoding-api.open-meteo.com/v1/search" +
@@ -75,7 +96,7 @@ object Layanan {
             daftar.add(
                 Lokasi(
                     nama = o.optString("name"),
-                    provinsi = o.optString("admin1"),
+                    provinsi = PetaTema.namaProvinsi(o.optString("admin1")),
                     lat = o.getDouble("latitude"),
                     lon = o.getDouble("longitude"),
                 )

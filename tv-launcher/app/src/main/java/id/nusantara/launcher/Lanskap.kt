@@ -18,6 +18,8 @@ object Lanskap {
     fun bentuk(tema: Tema): List<Bentuk> = simpanan.getOrPut(tema) {
         when (tema) {
             Tema.GEDUNG_SATE -> gedungSate()
+            Tema.MONAS -> kota(true)
+            Tema.PRAMBANAN -> prambanan()
             Tema.MERU -> meruBali()
             Tema.AMPERA -> ampera()
             Tema.PASAR_TERAPUNG -> pasarTerapung()
@@ -25,7 +27,7 @@ object Lanskap {
             Tema.HONAI -> honai()
             Tema.PEGUNUNGAN -> pegunungan()
             Tema.PESISIR -> pesisir()
-            Tema.KOTA -> kota()
+            Tema.KOTA -> kota(false)
         }
     }
 
@@ -230,7 +232,30 @@ object Lanskap {
         add(garis("M1770 630 Q1722 598 1676 636 M1770 630 Q1734 582 1694 586 M1770 630 Q1774 578 1750 552 M1770 630 Q1808 584 1850 590 M1770 630 Q1822 604 1858 646", "#2E7A4A", 8f))
     }
 
-    private fun kota(): List<Bentuk> = buildList {
+    // ---- DI Yogyakarta: Candi Prambanan dengan Gunung Merapi ----
+
+    private fun prambanan(): List<Bentuk> = buildList {
+        val candi = "M1300 650 V570 H1316 V530 H1334 V480 H1350 V435 H1364 V395 H1378 V360 H1390 L1400 318 L1410 360 H1422 V395 H1436 V435 H1450 V480 H1466 V530 H1484 V570 H1500 V650 Z"
+        add(isi("M520 660 L900 372 Q925 354 952 370 L1010 418 Q1080 470 1170 506 L1420 660 Z", "#7C9BB0"))
+        add(garis("M926 356 Q940 310 985 292 Q1035 272 1050 226", "#DCE6EC", 16f))
+        add(isi("M0 640 Q300 600 640 624 T1280 610 T1920 600 V700 H0 Z", "#54806B"))
+        add(pindah(isi(candi, "#4A4A52"), 502f, 377f, 0.42f))
+        add(pindah(isi(candi, "#4A4A52"), 1122f, 377f, 0.42f))
+        add(pindah(isi(candi, "#4A4A52"), 207f, 182f, 0.72f))
+        add(pindah(isi(candi, "#4A4A52"), 577f, 182f, 0.72f))
+        add(isi(candi, "#3F3F47"))
+        add(pindah(isi(candi, "#5A5A62"), 608f, 325f, 0.5f))
+        add(pindah(isi(candi, "#5A5A62"), 792f, 325f, 0.5f))
+        add(isi("M0 650 H1920 V1080 H0 Z", "#6E9E48"))
+        add(isi(elips(760f, 652f, 120f, 22f), "#3F6B4F"))
+        add(isi(elips(980f, 650f, 90f, 28f), "#3F6B4F"))
+        add(isi(elips(1840f, 648f, 110f, 34f), "#3F6B4F"))
+        add(isi("M0 760 Q600 700 1200 752 T1920 730 V1080 H0 Z", "#4F7F3A"))
+    }
+
+    // ---- Perkotaan; dengan Monas untuk Jakarta ----
+
+    private fun kota(monas: Boolean): List<Bentuk> = buildList {
         add(isi("M0 620 Q400 560 800 600 T1920 580 V700 H0 Z", "#8FA3AE"))
         add(isi("M640 650 V560 H700 V520 H760 V580 H820 V470 H880 V540 H950 V500 H1010 V440 H1070 V530 H1140 V480 H1200 V560 H1260 V510 H1310 V650 Z", "#7A8794"))
         add(isi("M1540 650 V520 H1600 V450 H1660 V540 H1720 V410 H1790 V500 H1850 V460 H1920 V650 Z", "#7A8794"))
@@ -240,6 +265,13 @@ object Lanskap {
             for (k in 0 until kolom) for (b in 0 until baris) {
                 add(isi(kotak(x0 + k * 18f, y0 + b * 22f, 6f, 8f), "#FFD98A"))
             }
+        }
+        if (monas) {
+            add(isi(poli("1335,650 1345,622 1505,622 1515,650"), "#A9A9A6"))
+            add(isi(poli("1372,622 1352,588 1498,588 1478,622"), "#C4C3BE"))
+            add(isi(poli("1411,588 1418,262 1432,262 1439,588"), "#E4E2DC"))
+            add(isi(kotak(1408f, 254f, 34f, 9f), "#B5B4AF"))
+            add(isi("M1425 214 Q1445 238 1425 254 Q1405 238 1425 214 Z", "#F2B632"))
         }
         add(isi("M0 650 H1920 V1080 H0 Z", "#3F4E48"))
         add(isi(elips(1340f, 652f, 70f, 22f), "#2F4A3A"))

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nusantara Launcher</string>
+    <string name="pengalih_nama">Pengalih tombol Home</string>
+    <string name="pengalih_keterangan">Membuka Nusantara Launcher saat beranda bawaan TV tampil. Tidak membaca isi layar; hanya mengenali layar beranda bawaan.</string>
 </resources>

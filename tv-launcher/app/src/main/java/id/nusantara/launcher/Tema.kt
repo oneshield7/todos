@@ -3,9 +3,11 @@ package id.nusantara.launcher
 import android.graphics.Color
 import java.util.Calendar
 
-/** Latar yang tersedia: enam ikon daerah dan tiga bentang alam umum sebagai cadangan. */
+/** Latar yang tersedia: delapan ikon daerah dan tiga bentang alam umum sebagai cadangan. */
 enum class Tema(val aksen: Int) {
     GEDUNG_SATE(Color.parseColor("#C3E88D")),
+    MONAS(Color.parseColor("#FF9A4D")),
+    PRAMBANAN(Color.parseColor("#E3B45C")),
     MERU(Color.parseColor("#FFB627")),
     AMPERA(Color.parseColor("#F2C46B")),
     PASAR_TERAPUNG(Color.parseColor("#F29A4A")),
@@ -35,38 +37,62 @@ enum class Waktu {
     }
 }
 
-/** Menentukan latar dari nama provinsi, dalam ejaan Indonesia maupun Inggris. */
+/** Mengenali provinsi dari namanya (ejaan Indonesia atau Inggris) dan menentukan latarnya. */
 object PetaTema {
+    private class Provinsi(val nama: String, val tema: Tema, vararg val lain: String)
+
+    private val daftar = listOf(
+        Provinsi("Aceh", Tema.PESISIR),
+        Provinsi("Sumatera Utara", Tema.PEGUNUNGAN, "North Sumatra"),
+        Provinsi("Sumatera Barat", Tema.PEGUNUNGAN, "West Sumatra"),
+        Provinsi("Riau", Tema.KOTA),
+        Provinsi("Kepulauan Riau", Tema.PESISIR, "Riau Islands"),
+        Provinsi("Jambi", Tema.PEGUNUNGAN),
+        Provinsi("Sumatera Selatan", Tema.AMPERA, "South Sumatra"),
+        Provinsi("Kepulauan Bangka Belitung", Tema.PESISIR, "Bangka Belitung Islands", "Bangka Belitung"),
+        Provinsi("Bengkulu", Tema.PESISIR),
+        Provinsi("Lampung", Tema.PESISIR),
+        Provinsi("Banten", Tema.KOTA),
+        Provinsi("DK Jakarta", Tema.MONAS, "Jakarta", "DKI Jakarta", "Daerah Khusus Jakarta", "Daerah Khusus Ibukota Jakarta", "Jakarta Raya"),
+        Provinsi("Jawa Barat", Tema.GEDUNG_SATE, "West Java"),
+        Provinsi("Jawa Tengah", Tema.PEGUNUNGAN, "Central Java"),
+        Provinsi("DI Yogyakarta", Tema.PRAMBANAN, "Yogyakarta", "Daerah Istimewa Yogyakarta", "Special Region of Yogyakarta"),
+        Provinsi("Jawa Timur", Tema.PEGUNUNGAN, "East Java"),
+        Provinsi("Bali", Tema.MERU),
+        Provinsi("Nusa Tenggara Barat", Tema.PEGUNUNGAN, "West Nusa Tenggara"),
+        Provinsi("Nusa Tenggara Timur", Tema.PESISIR, "East Nusa Tenggara"),
+        Provinsi("Kalimantan Barat", Tema.KOTA, "West Kalimantan"),
+        Provinsi("Kalimantan Tengah", Tema.KOTA, "Central Kalimantan"),
+        Provinsi("Kalimantan Selatan", Tema.PASAR_TERAPUNG, "South Kalimantan"),
+        Provinsi("Kalimantan Timur", Tema.PESISIR, "East Kalimantan"),
+        Provinsi("Kalimantan Utara", Tema.PESISIR, "North Kalimantan"),
+        Provinsi("Sulawesi Utara", Tema.PESISIR, "North Sulawesi"),
+        Provinsi("Gorontalo", Tema.PEGUNUNGAN),
+        Provinsi("Sulawesi Tengah", Tema.PEGUNUNGAN, "Central Sulawesi"),
+        Provinsi("Sulawesi Barat", Tema.PESISIR, "West Sulawesi"),
+        Provinsi("Sulawesi Selatan", Tema.PINISI, "South Sulawesi"),
+        Provinsi("Sulawesi Tenggara", Tema.PESISIR, "Southeast Sulawesi", "South East Sulawesi"),
+        Provinsi("Maluku", Tema.PESISIR),
+        Provinsi("Maluku Utara", Tema.PESISIR, "North Maluku"),
+        Provinsi("Papua", Tema.PESISIR),
+        Provinsi("Papua Barat", Tema.PEGUNUNGAN, "West Papua"),
+        Provinsi("Papua Barat Daya", Tema.PESISIR, "Southwest Papua", "South West Papua"),
+        Provinsi("Papua Selatan", Tema.PESISIR, "South Papua"),
+        Provinsi("Papua Tengah", Tema.PEGUNUNGAN, "Central Papua"),
+        Provinsi("Papua Pegunungan", Tema.HONAI, "Highland Papua", "Papua Highlands"),
+    )
+
     private fun kunci(teks: String) = teks.lowercase().filter { it.isLetter() }
 
-    private val khusus = mapOf(
-        "jawabarat" to Tema.GEDUNG_SATE, "westjava" to Tema.GEDUNG_SATE,
-        "bali" to Tema.MERU,
-        "sumateraselatan" to Tema.AMPERA, "southsumatra" to Tema.AMPERA,
-        "kalimantanselatan" to Tema.PASAR_TERAPUNG, "southkalimantan" to Tema.PASAR_TERAPUNG,
-        "sulawesiselatan" to Tema.PINISI, "southsulawesi" to Tema.PINISI,
-        "papuapegunungan" to Tema.HONAI, "highlandpapua" to Tema.HONAI,
-    )
-
-    private val perkotaan = setOf(
-        "dkjakarta", "jakarta", "dkijakarta", "daerahkhususjakarta", "daerahkhususibukotajakarta",
-        "banten", "riau", "kalimantanbarat", "westkalimantan", "kalimantantengah", "centralkalimantan",
-    )
-
-    private val pegunungan = setOf(
-        "sumaterautara", "northsumatra", "sumaterabarat", "westsumatra", "jambi",
-        "jawatengah", "centraljava", "diyogyakarta", "yogyakarta", "daerahistimewayogyakarta",
-        "specialregionofyogyakarta", "jawatimur", "eastjava", "nusatenggarabarat", "westnusatenggara",
-        "sulawesitengah", "centralsulawesi", "gorontalo", "papuatengah", "centralpapua",
-        "papuabarat", "westpapua",
-    )
-
-    fun untuk(provinsi: String): Tema {
-        val k = kunci(provinsi)
-        return khusus[k] ?: when (k) {
-            in perkotaan -> Tema.KOTA
-            in pegunungan -> Tema.PEGUNUNGAN
-            else -> Tema.PESISIR
+    private val peta: Map<String, Provinsi> = HashMap<String, Provinsi>().apply {
+        for (p in daftar) {
+            put(kunci(p.nama), p)
+            for (alias in p.lain) put(kunci(alias), p)
         }
     }
+
+    fun untuk(provinsi: String): Tema = peta[kunci(provinsi)]?.tema ?: Tema.PESISIR
+
+    /** Nama provinsi dalam ejaan Indonesia; nama yang tidak dikenal dikembalikan apa adanya. */
+    fun namaProvinsi(provinsi: String): String = peta[kunci(provinsi)]?.nama ?: provinsi
 }

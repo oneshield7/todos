@@ -30,7 +30,13 @@ import androidx.core.graphics.PathParser
  * Satu ubin di baris aplikasi. Gambar memenuhi ubin; nama hanya muncul saat ubin dipilih.
  * [u] adalah skala dari ukuran desain 1920 px ke lebar layar sebenarnya.
  */
-class Ubin(context: Context, private val u: Float, aksen: Int, nama: String) : LinearLayout(context) {
+class Ubin(
+    context: Context,
+    private val u: Float,
+    aksen: Int,
+    nama: String,
+    lebarDesain: Float = 208f,
+) : LinearLayout(context) {
 
     val gambar = ImageView(context)
     private val bingkai = FrameLayout(context)
@@ -49,8 +55,8 @@ class Ubin(context: Context, private val u: Float, aksen: Int, nama: String) : L
         // Bunyi pindah dan pilih dimainkan sendiri lewat Bunyi, supaya tidak berbunyi dua kali
         isSoundEffectsEnabled = false
 
-        val lebar = (208f * u).toInt()
-        val tinggi = (117f * u).toInt()
+        val lebar = (lebarDesain * u).toInt()
+        val tinggi = (lebarDesain * 117f / 208f * u).toInt()
         val tepi = (6f * u).toInt()
 
         cincin.setColor(Color.TRANSPARENT)
