@@ -179,15 +179,16 @@ class MainActivity : Activity() {
 
         // Lapisan peredup dan laci aplikasi, keduanya di atas beranda
         redup = View(this)
-        redup.setBackgroundColor(Color.argb(105, 9, 18, 20))
+        redup.setBackgroundColor(Color.argb(60, 9, 18, 20))
         redup.alpha = 0f
         akar.addView(redup, FrameLayout.LayoutParams(penuh, penuh))
 
         tinggiLaci = (resources.displayMetrics.heightPixels * 0.8f).toInt()
         laci = FrameLayout(this)
         val latarLaci = GradientDrawable()
-        // Tembus pandang: latar beranda masih samar terlihat di balik laci
-        latarLaci.setColor(Color.argb(212, 15, 26, 28))
+        // Tembus pandang: latar beranda tetap terlihat di balik laci. Sedikit gelap dipertahankan
+        // supaya judul dan nama aplikasi masih terbaca di atas langit siang yang terang.
+        latarLaci.setColor(Color.argb(140, 9, 18, 20))
         val sudut = 36f * u
         latarLaci.cornerRadii = floatArrayOf(sudut, sudut, sudut, sudut, 0f, 0f, 0f, 0f)
         laci.background = latarLaci
