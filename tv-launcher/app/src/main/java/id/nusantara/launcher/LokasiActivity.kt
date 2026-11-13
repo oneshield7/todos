@@ -86,8 +86,8 @@ class LokasiActivity : Activity() {
             override fun getView(posisi: Int, lama: View?, induk: ViewGroup): View {
                 val baris = super.getView(posisi, lama, induk)
                 val lokasi = daftar[posisi]
-                val atas = baris.findViewById<TextView>(android.R.id.text1)
-                val bawah = baris.findViewById<TextView>(android.R.id.text2)
+                val atas = baris.findViewById<TextView>(android.R.id.text1)!!
+                val bawah = baris.findViewById<TextView>(android.R.id.text2)!!
                 atas.text = lokasi.nama
                 atas.setTextColor(terang)
                 atas.setTextSize(TypedValue.COMPLEX_UNIT_PX, 28f * u)
