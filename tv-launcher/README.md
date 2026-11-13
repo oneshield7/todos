@@ -2,18 +2,23 @@
 
 Launcher Android TV yang latarnya mengikuti lokasi dan cuaca. Ditulis dengan Kotlin native, tanpa framework.
 
-## Yang sudah ada di versi 0.1
+## Yang sudah ada di versi 0.2
 
-- Beranda: jam, tanggal, suhu, kondisi cuaca, nama kota, dan satu baris aplikasi.
+- Beranda: jam dengan detik, tanggal, suhu, kondisi cuaca, nama kota, dan satu baris aplikasi.
+- Baris beranda hanya berisi aplikasi yang disematkan (paling banyak 8). Ubin "Semua aplikasi" membuka kisi tujuh kolom berisi seluruh aplikasi.
+- Tekan lama OK pada ubin untuk menyematkan aplikasi di beranda atau melepasnya.
 - Ubin aplikasi memakai banner asli aplikasi yang memenuhi ubin; nama hanya muncul pada ubin terpilih.
+- Ubin bawaan: Semua aplikasi, Input (sumber HDMI/AV), Lokasi, dan Pengaturan.
+- Tombol remote Menu/Pengaturan, Input, dan Semua aplikasi diteruskan ke fungsi yang sesuai. Tombol lain yang belum punya fungsi memunculkan pesan berisi nama tombolnya, sebagai bantuan selama masa uji.
+- Bunyi saat berpindah dan memilih ubin.
 - Latar bergambar untuk Jawa Barat, Bali, Sumatera Selatan, Kalimantan Selatan, Sulawesi Selatan, dan Papua Pegunungan. Provinsi lain memakai bentang alam umum (pegunungan, pesisir, atau perkotaan).
-- Langit berganti menurut jam (pagi, siang, senja, malam) dan cuaca; awan, hujan, kabut, dan kilat beranimasi.
+- Langit berganti menurut jam (pagi, siang, senja, malam) dan cuaca; awan bergumpal, hujan, kabut, dan kilat beranimasi.
 - Pilih lokasi: 38 ibu kota provinsi, ditambah pencarian kota dan kabupaten lain.
 - Cuaca dari Open-Meteo, diperbarui tiap 20 menit. TV harus tersambung internet.
 
 ## Yang belum ada
 
-Deteksi lokasi otomatis, screensaver, mode redup, pembersihan aplikasi bawaan, wallpaper foto sendiri, pilihan aplikasi favorit, dan gambar ikon untuk 32 provinsi lainnya.
+Deteksi lokasi otomatis, screensaver, mode redup, pembersihan aplikasi bawaan, wallpaper foto sendiri, mengatur urutan aplikasi di beranda, dan gambar ikon untuk 32 provinsi lainnya.
 
 ## Merakit APK
 

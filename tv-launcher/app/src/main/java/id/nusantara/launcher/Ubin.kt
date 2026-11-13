@@ -14,6 +14,7 @@ import android.graphics.Rect
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.media.AudioManager
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.Gravity
@@ -34,6 +35,7 @@ class Ubin(context: Context, private val u: Float, aksen: Int, nama: String) : L
     val gambar = ImageView(context)
     private val bingkai = FrameLayout(context)
     private val label = TextView(context)
+    private val tanda = View(context)
     private val cincin = GradientDrawable()
     private val redup = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0.7f) })
 
@@ -44,6 +46,8 @@ class Ubin(context: Context, private val u: Float, aksen: Int, nama: String) : L
         clipChildren = false
         clipToPadding = false
         contentDescription = nama
+        // Bunyi pindah dan pilih dimainkan sendiri lewat Bunyi, supaya tidak berbunyi dua kali
+        isSoundEffectsEnabled = false
 
         val lebar = (208f * u).toInt()
         val tinggi = (117f * u).toInt()
@@ -63,6 +67,18 @@ class Ubin(context: Context, private val u: Float, aksen: Int, nama: String) : L
         bingkai.addView(
             gambar,
             FrameLayout.LayoutParams(lebar, tinggi).apply { setMargins(tepi, tepi, tepi, tepi) }
+        )
+        val titik = GradientDrawable()
+        titik.shape = GradientDrawable.OVAL
+        titik.setColor(aksen)
+        titik.setStroke((3f * u).toInt().coerceAtLeast(1), Color.parseColor("#0F1A1C"))
+        tanda.background = titik
+        tanda.visibility = View.GONE
+        val sisi = (22f * u).toInt()
+        val sela = tepi + (8f * u).toInt()
+        bingkai.addView(
+            tanda,
+            FrameLayout.LayoutParams(sisi, sisi, Gravity.TOP or Gravity.END).apply { setMargins(0, sela, sela, 0) }
         )
         addView(bingkai, LayoutParams(lebar + tepi * 2, tinggi + tepi * 2))
 
@@ -89,6 +105,11 @@ class Ubin(context: Context, private val u: Float, aksen: Int, nama: String) : L
         gambar.setImageDrawable(ikon)
     }
 
+    /** Titik kecil di sudut ubin: tanda aplikasi ini disematkan di beranda. */
+    fun tandai(aktif: Boolean) {
+        tanda.visibility = if (aktif) View.VISIBLE else View.GONE
+    }
+
     private fun terapkan(dipilih: Boolean) {
         bingkai.background = if (dipilih) cincin else null
         label.visibility = if (dipilih) View.VISIBLE else View.INVISIBLE
@@ -99,6 +120,7 @@ class Ubin(context: Context, private val u: Float, aksen: Int, nama: String) : L
     override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
         terapkan(gainFocus)
+        if (gainFocus) Bunyi.pindah()
         val skala = if (gainFocus) 1.07f else 1f
         bingkai.animate().scaleX(skala).scaleY(skala).setDuration(140).start()
     }
@@ -112,7 +134,7 @@ class GambarBawaan(
     private val aksen: Int,
 ) : Drawable() {
 
-    enum class Jenis { LOKASI, PENGATURAN }
+    enum class Jenis { SEMUA, INPUT, LOKASI, PENGATURAN }
 
     private val kuas = Paint(Paint.ANTI_ALIAS_FLAG)
 
@@ -125,6 +147,36 @@ class GambarBawaan(
         kuas.color = latar
         canvas.drawRect(0f, 0f, 208f, 117f, kuas)
         when (jenis) {
+            Jenis.SEMUA -> {
+                for (baris in 0..1) for (kolom in 0..2) {
+                    kuas.color = if (baris == 0 && kolom == 0) aksen else terang
+                    val x = 24f + kolom * 58f
+                    val y = 14f + baris * 49f
+                    canvas.drawRoundRect(x, y, x + 44f, y + 40f, 10f, 10f, kuas)
+                }
+            }
+            Jenis.INPUT -> {
+                kuas.style = Paint.Style.STROKE
+                kuas.strokeCap = Paint.Cap.ROUND
+                kuas.strokeJoin = Paint.Join.ROUND
+                kuas.strokeWidth = 9f
+                kuas.color = terang
+                val kotak = Path()
+                kotak.moveTo(118f, 24f)
+                kotak.lineTo(176f, 24f)
+                kotak.lineTo(176f, 93f)
+                kotak.lineTo(118f, 93f)
+                canvas.drawPath(kotak, kuas)
+                kuas.color = aksen
+                kuas.strokeWidth = 11f
+                val panah = Path()
+                panah.moveTo(30f, 58.5f)
+                panah.lineTo(134f, 58.5f)
+                panah.moveTo(110f, 36f)
+                panah.lineTo(136f, 58.5f)
+                panah.lineTo(110f, 81f)
+                canvas.drawPath(panah, kuas)
+            }
             Jenis.PENGATURAN -> {
                 kuas.color = terang
                 kuas.style = Paint.Style.STROKE
@@ -219,5 +271,27 @@ class IkonCuaca(context: Context) : View(context) {
         kuas.color = warna
         canvas.drawPath(jalur, kuas)
         canvas.restore()
+    }
+}
+
+/** Bunyi pindah dan pilih. Dimainkan langsung supaya tetap terdengar walau bunyi sistem TV dimatikan. */
+object Bunyi {
+    private var audio: AudioManager? = null
+
+    /** Diset benar saat ubin sedang disusun ulang, supaya fokus otomatis tidak ikut berbunyi. */
+    var senyap = false
+
+    fun siapkan(konteks: Context) {
+        if (audio != null) return
+        audio = konteks.applicationContext.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+        audio?.loadSoundEffects()
+    }
+
+    fun pindah() {
+        if (!senyap) audio?.playSoundEffect(AudioManager.FX_FOCUS_NAVIGATION_RIGHT, -1f)
+    }
+
+    fun pilih() {
+        audio?.playSoundEffect(AudioManager.FX_KEY_CLICK, -1f)
     }
 }

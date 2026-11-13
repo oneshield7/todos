@@ -113,6 +113,21 @@ class LatarView(context: Context) : View(context) {
         op(penuh, potong, Path.Op.DIFFERENCE)
     }
 
+    /** Tiga bentuk awan bergumpal pada ukuran satuan (lebar -1..1), diskalakan saat digambar. */
+    private val bentukAwan: Array<Path> = arrayOf(
+        gumpalan(-0.52f, 0.02f, 0.34f, -0.08f, -0.2f, 0.46f, 0.42f, -0.04f, 0.36f, 0.72f, 0.14f, 0.24f),
+        gumpalan(-0.6f, 0.1f, 0.28f, -0.22f, -0.1f, 0.4f, 0.24f, -0.24f, 0.44f, 0.62f, 0.02f, 0.32f),
+        gumpalan(-0.66f, 0.12f, 0.26f, -0.36f, -0.06f, 0.4f, 0.12f, -0.16f, 0.38f, 0.52f, 0.06f, 0.3f),
+    )
+
+    /** Dasar awan yang rata ditambah beberapa gumpalan bulat; [n] berisi cx, cy, r berulang. */
+    private fun gumpalan(vararg n: Float): Path {
+        val jalur = Path()
+        jalur.addRoundRect(RectF(-1f, 0f, 1f, 0.42f), 0.21f, 0.21f, Path.Direction.CW)
+        for (i in n.indices step 3) jalur.addCircle(n[i], n[i + 1], n[i + 2], Path.Direction.CW)
+        return jalur
+    }
+
     private fun warna(vararg hex: String) = IntArray(hex.size) { Color.parseColor(hex[it]) }
 
     private fun warnaLangit(): IntArray = when (kondisi) {
@@ -292,8 +307,11 @@ class LatarView(context: Context) : View(context) {
             val a = awan[i]
             val keliling = 1920.0 + a[2] * 2.0 + 200.0
             val x = ((a[0] + a[2] + a[4] * t) % keliling - a[2]).toFloat()
-            oval.set(x - a[2], a[1] - a[3], x + a[2], a[1] + a[3])
-            canvas.drawOval(oval, kuas)
+            canvas.save()
+            canvas.translate(x, a[1])
+            canvas.scale(a[2], a[3] * 2.2f)
+            canvas.drawPath(bentukAwan[i % bentukAwan.size], kuas)
+            canvas.restore()
         }
     }
 

@@ -54,7 +54,9 @@ object DaftarLokasi {
     )
 }
 
-/** Menyimpan lokasi pilihan pengguna di TV. */
+enum class HasilFavorit { DITAMBAH, DIHAPUS, PENUH }
+
+/** Menyimpan lokasi dan aplikasi yang disematkan di beranda. */
 class Simpanan(context: Context) {
     private val prefs = context.getSharedPreferences("launcher", Context.MODE_PRIVATE)
 
@@ -77,4 +79,35 @@ class Simpanan(context: Context) {
                 .putFloat("lon", nilai.lon.toFloat())
                 .apply()
         }
+
+    /** Salah sampai daftar sematan pertama kali disimpan. */
+    val favoritDiatur: Boolean
+        get() = prefs.contains("favorit")
+
+    /** Paket aplikasi yang disematkan di beranda, berurutan. */
+    var favorit: List<String>
+        get() = (prefs.getString("favorit", "") ?: "").split("|").filter { it.isNotBlank() }
+        set(nilai) {
+            prefs.edit().putString("favorit", nilai.joinToString("|")).apply()
+        }
+
+    fun gantiFavorit(paket: String): HasilFavorit {
+        val kini = favorit.toMutableList()
+        return when {
+            kini.remove(paket) -> {
+                favorit = kini
+                HasilFavorit.DIHAPUS
+            }
+            kini.size >= MAKS_FAVORIT -> HasilFavorit.PENUH
+            else -> {
+                kini.add(paket)
+                favorit = kini
+                HasilFavorit.DITAMBAH
+            }
+        }
+    }
+
+    companion object {
+        const val MAKS_FAVORIT = 8
+    }
 }
