@@ -108,6 +108,20 @@ class Simpanan(context: Context) {
             prefs.edit().putBoolean("bunyi", nilai).apply()
         }
 
+    /** Saat musik diputar, latar beranda berganti menjadi sampul album yang diburamkan. */
+    var latarMusik: Boolean
+        get() = prefs.getBoolean("latar_musik", true)
+        set(nilai) {
+            prefs.edit().putBoolean("latar_musik", nilai).apply()
+        }
+
+    /** Benar setelah pengguna pernah ditawari izin untuk menampilkan musik. */
+    var sudahTanyaMusik: Boolean
+        get() = prefs.getBoolean("tanya_musik", false)
+        set(nilai) {
+            prefs.edit().putBoolean("tanya_musik", nilai).apply()
+        }
+
     /** Latar laci aplikasi: 0 bening, 1 sedang, 2 gelap. */
     var beningLaci: Int
         get() = prefs.getInt("bening_laci", 1).coerceIn(0, 2)

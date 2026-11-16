@@ -20,7 +20,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
+import android.media.AudioManager
+import android.graphics.Bitmap
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -70,10 +73,19 @@ class MainActivity : Activity() {
     private var laciTerbuka = false
     private var tinggiLaci = 0
 
+    private lateinit var pemantau: PemantauMusik
+    private lateinit var kartuMusik: KartuMusik
+    private lateinit var lapisMusik: FrameLayout
+    private lateinit var gambarLatarMusik: ImageView
+    private lateinit var tiraiMusik: View
+    private var sampulLatar: Bitmap? = null
+    private var latarMusikTampil = false
+
     /** Berdetak tepat di pergantian detik. */
     private val detak = object : Runnable {
         override fun run() {
             perbaruiJam()
+            if (kartuMusik.visibility == View.VISIBLE) kartuMusik.detak()
             val kini = System.currentTimeMillis()
             if (kini - cuacaDiambil > 20 * 60_000L) muatCuaca()
             penangan.postDelayed(this, 1000L - kini % 1000L + 5L)
@@ -115,6 +127,16 @@ class MainActivity : Activity() {
         latar = LatarView(this)
         akar.addView(latar, FrameLayout.LayoutParams(penuh, penuh))
 
+        // Latar musik: sampul album yang diburamkan dan digelapkan, di atas latar daerah
+        lapisMusik = FrameLayout(this)
+        gambarLatarMusik = ImageView(this)
+        gambarLatarMusik.scaleType = ImageView.ScaleType.CENTER_CROP
+        tiraiMusik = View(this)
+        lapisMusik.addView(gambarLatarMusik, FrameLayout.LayoutParams(penuh, penuh))
+        lapisMusik.addView(tiraiMusik, FrameLayout.LayoutParams(penuh, penuh))
+        lapisMusik.alpha = 0f
+        akar.addView(lapisMusik, FrameLayout.LayoutParams(penuh, penuh))
+
         // Kiri atas: jam dengan detik kecil, lalu tanggal
         val kiri = LinearLayout(this)
         kiri.orientation = LinearLayout.VERTICAL
@@ -155,6 +177,15 @@ class MainActivity : Activity() {
         akar.addView(kanan, FrameLayout.LayoutParams(isi, isi, Gravity.TOP or Gravity.END).apply {
             rightMargin = px(96f)
             topMargin = px(64f)
+        })
+
+        // Kiri tengah: kartu musik yang sedang diputar; hanya tampil bila ada lagu
+        pemantau = PemantauMusik(applicationContext) { perbaruiMusik() }
+        kartuMusik = KartuMusik(this, u, pemantau)
+        kartuMusik.visibility = View.GONE
+        akar.addView(kartuMusik, FrameLayout.LayoutParams(px(800f), isi, Gravity.TOP or Gravity.START).apply {
+            leftMargin = px(96f)
+            topMargin = px(300f)
         })
 
         // Bawah: satu baris ubin, dengan petunjuk kecil di bawahnya
@@ -235,12 +266,15 @@ class MainActivity : Activity() {
         terapkanLokasi()
         penangan.post(detak)
         muatAplikasi()
+        pemantau.mulai()
         tawarkanBerandaUtama()
+        tawarkanIzinMusik()
     }
 
     override fun onStop() {
         super.onStop()
         latar.aktif = false
+        pemantau.berhenti()
         penangan.removeCallbacks(detak)
     }
 
@@ -280,9 +314,17 @@ class MainActivity : Activity() {
         when (keyCode) {
             // Beranda adalah layar paling dasar
             KeyEvent.KEYCODE_BACK -> return true
-            KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_ALL_APPS -> {
+            KeyEvent.KEYCODE_ALL_APPS -> {
                 bukaLaci()
                 return true
+            }
+            // Tombol bawah membuka laci hanya dari baris aplikasi; dari kartu musik ia turun ke baris dulu
+            KeyEvent.KEYCODE_DPAD_DOWN -> {
+                val fokus = currentFocus
+                if (fokus == null || fokus.parent === baris) {
+                    bukaLaci()
+                    return true
+                }
             }
             KeyEvent.KEYCODE_MENU -> {
                 bukaPengaturanLauncher()
@@ -407,7 +449,8 @@ class MainActivity : Activity() {
     }
 
     private fun warnaiTeks() {
-        val gelap = latar.latarTerang
+        // di atas latar musik yang gelap, teks selalu terang
+        val gelap = latar.latarTerang && !latarMusikTampil
         val utama = Color.parseColor(if (gelap) "#0B2233" else "#F2F6F3")
         val lembut = Color.parseColor(if (gelap) "#12324A" else "#D3DEDA")
         jam.setTextColor(utama)
@@ -478,6 +521,49 @@ class MainActivity : Activity() {
         HasilFavorit.DITAMBAH -> aplikasi.nama + " disematkan di beranda"
         HasilFavorit.DIHAPUS -> aplikasi.nama + " dilepas dari beranda"
         HasilFavorit.PENUH -> "Beranda sudah penuh (" + Simpanan.MAKS_FAVORIT + " aplikasi). Lepas satu dulu."
+    }
+
+    // ---- Musik yang sedang diputar ----
+
+    /** Dipanggil tiap kali lagu, sampul, atau status putar berubah. */
+    private fun perbaruiMusik() {
+        val tampil = pemantau.ada
+        if (tampil) kartuMusik.perbarui()
+        if (tampil != (kartuMusik.visibility == View.VISIBLE)) {
+            val fokusDiKartu = kartuMusik.hasFocus()
+            kartuMusik.visibility = if (tampil) View.VISIBLE else View.GONE
+            if (!tampil && fokusDiKartu && !laciTerbuka) fokusBaris()
+        }
+
+        val sampul = pemantau.sampul
+        val pakaiLatar = tampil && pemantau.memutar && simpanan.latarMusik && sampul != null
+        if (pakaiLatar && sampul != null && sampul !== sampulLatar) {
+            sampulLatar = sampul
+            gambarLatarMusik.setImageBitmap(SkemaMusik.buram(sampul))
+            tiraiMusik.setBackgroundColor(kartuMusik.skema.tirai)
+        }
+        if (pakaiLatar != latarMusikTampil) {
+            latarMusikTampil = pakaiLatar
+            lapisMusik.animate().alpha(if (pakaiLatar) 1f else 0f).setDuration(500).start()
+            warnaiTeks()
+        }
+    }
+
+    /** Ditawarkan sekali, saat ada suara diputar tetapi launcher belum diizinkan melihat lagunya. */
+    private fun tawarkanIzinMusik() {
+        if (simpanan.sudahTanyaMusik || IzinMusik.ada(this)) return
+        val audio = getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
+        if (!audio.isMusicActive) return
+        simpanan.sudahTanyaMusik = true
+        AlertDialog.Builder(this)
+            .setTitle("Tampilkan musik yang sedang diputar?")
+            .setMessage(
+                "Beranda bisa menampilkan lagu, sampul album, dan tombol putar. Untuk itu Android mewajibkan izin " +
+                    "\"akses notifikasi\". Launcher hanya memakainya untuk mengetahui lagu yang diputar; isi notifikasi tidak dibaca."
+            )
+            .setPositiveButton("Beri izin") { _, _ -> IzinMusik.minta(this) }
+            .setNegativeButton("Nanti", null)
+            .show()
     }
 
     private fun fokusBaris() {
@@ -598,6 +684,7 @@ class MainActivity : Activity() {
         laci.visibility = View.VISIBLE
         // selama laci terbuka, fokus tidak boleh pindah ke baris beranda di belakangnya
         gulirBaris.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        kartuMusik.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         laci.animate().translationY(0f).setDuration(280).setInterpolator(DecelerateInterpolator()).withEndAction(null).start()
         redup.animate().alpha(1f).setDuration(280).start()
         gulirBaris.animate().alpha(0f).setDuration(200).start()
@@ -612,6 +699,7 @@ class MainActivity : Activity() {
         if (!laciTerbuka) return
         laciTerbuka = false
         gulirBaris.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+        kartuMusik.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
         laci.animate().translationY(tinggiLaci.toFloat()).setDuration(240).setInterpolator(AccelerateInterpolator())
             .withEndAction { if (!laciTerbuka) laci.visibility = View.INVISIBLE }.start()
         redup.animate().alpha(0f).setDuration(240).start()

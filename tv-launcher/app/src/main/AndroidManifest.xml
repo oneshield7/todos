@@ -68,5 +68,16 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/pengalih_home" />
         </service>
+
+        <!-- Pemegang izin akses notifikasi, dipakai hanya untuk mengetahui musik yang sedang diputar -->
+        <service
+            android:name=".PendengarMedia"
+            android:exported="true"
+            android:label="@string/pendengar_nama"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

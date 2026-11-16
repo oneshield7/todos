@@ -2,7 +2,7 @@
 
 Launcher Android TV yang latarnya mengikuti lokasi dan cuaca. Ditulis dengan Kotlin native, tanpa framework.
 
-## Yang sudah ada di versi 0.4
+## Yang sudah ada di versi 0.5
 
 - Beranda: jam dengan detik, tanggal, suhu, kondisi cuaca, nama kota, dan satu baris aplikasi yang disematkan (paling banyak 8).
 - Laci aplikasi: tombol bawah (atau ubin "Semua aplikasi") menggeser laci naik dari bawah dengan latar tembus pandang; kisi tujuh kolom mengisi lebar layar. Tombol Kembali, atau tombol atas di baris teratas, menutupnya.
@@ -12,6 +12,7 @@ Launcher Android TV yang latarnya mengikuti lokasi dan cuaca. Ditulis dengan Kot
 - Beranda utama: saat pertama dipakai, launcher menawarkan diri menjadi beranda utama lewat dialog resmi Android. Bila TV tidak menyediakan pilihan launcher, tersedia "Pengalih tombol Home" (layanan aksesibilitas yang dinyalakan pengguna sendiri).
 - Layar Pengaturan launcher (ubin di beranda, ubin di ujung laci aplikasi, atau tombol Menu di remote): lokasi, beranda utama atau kembali ke launcher bawaan, animasi cuaca, bunyi navigasi, tingkat bening laci aplikasi, dan pintasan ke Pengaturan TV.
 - Tombol remote Menu, Pengaturan, Input, dan Semua aplikasi diteruskan ke fungsi yang sesuai. Tombol lain yang belum punya fungsi memunculkan pesan berisi nama tombolnya, sebagai bantuan selama masa uji.
+- Musik yang sedang diputar: kartu di beranda berisi sampul, judul, artis, garis progres bergelombang, dan tombol sebelumnya, putar atau jeda, dan berikutnya. Warna kartu mengikuti sampul album, dan latar beranda berganti menjadi sampul yang diburamkan selama lagu berjalan. Perlu izin akses notifikasi, yang diberikan pengguna sendiri.
 - Bunyi saat berpindah dan memilih ubin.
 - Latar bergambar untuk DK Jakarta (Monas), Jawa Barat, DI Yogyakarta (Prambanan), Bali, Sumatera Selatan, Kalimantan Selatan, Sulawesi Selatan, dan Papua Pegunungan. Provinsi lain memakai bentang alam umum (pegunungan, pesisir, atau perkotaan).
 - Langit berganti menurut jam (pagi, siang, senja, malam) dan cuaca; awan bergumpal, hujan, kabut, dan kilat beranimasi.

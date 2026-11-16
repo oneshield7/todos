@@ -111,6 +111,18 @@ class PengaturanActivity : Activity() {
             simpanan.beningLaci = (simpanan.beningLaci + 1) % NAMA_BENING.size
             isi(4)
         }
+        val izinMusik = IzinMusik.ada(this)
+        baris(
+            "Musik yang sedang diputar",
+            "Menampilkan lagu, sampul, dan tombol putar di beranda. Perlu izin akses notifikasi; isi notifikasi tidak dibaca.",
+            if (izinMusik) "Aktif" else "Perlu izin",
+        ) {
+            IzinMusik.minta(this)
+        }
+        baris("Latar mengikuti musik", "Saat musik diputar, latar beranda menjadi sampul album yang diburamkan", nyala(simpanan.latarMusik)) {
+            simpanan.latarMusik = !simpanan.latarMusik
+            isi(6)
+        }
         baris("Pengaturan TV", "Jaringan, gambar, suara, dan pengaturan sistem lainnya", "") {
             try {
                 startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
