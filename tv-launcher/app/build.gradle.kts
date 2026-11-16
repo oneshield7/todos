@@ -13,8 +13,8 @@ android {
         applicationId = "id.nusantara.launcher"
         minSdk = 23
         targetSdk = 34
-        versionCode = 9
-        versionName = "0.6.2"
+        versionCode = 10
+        versionName = "0.7.0"
     }
 
     // Kunci tanda tangan tetap, supaya versi baru bisa dipasang menimpa versi lama.

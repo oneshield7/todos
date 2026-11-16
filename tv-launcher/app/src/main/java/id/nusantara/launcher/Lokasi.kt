@@ -143,6 +143,24 @@ class Simpanan(context: Context) {
             prefs.edit().putBoolean("tanya_lirik", nilai).apply()
         }
 
+    /** Cuaca terakhir yang berhasil diambil, dipakai screensaver sebelum data baru datang. Berlaku tiga jam. */
+    val cuacaTerakhir: Cuaca?
+        get() {
+            val nama = prefs.getString("cuaca_kondisi", null) ?: return null
+            if (System.currentTimeMillis() - prefs.getLong("cuaca_waktu", 0L) > 3 * 60 * 60_000L) return null
+            val kondisi = Kondisi.values().firstOrNull { it.name == nama } ?: return null
+            return Cuaca(prefs.getInt("cuaca_suhu", 0), kondisi, prefs.getBoolean("cuaca_siang", true))
+        }
+
+    fun simpanCuaca(cuaca: Cuaca) {
+        prefs.edit()
+            .putString("cuaca_kondisi", cuaca.kondisi.name)
+            .putInt("cuaca_suhu", cuaca.suhu)
+            .putBoolean("cuaca_siang", cuaca.siang)
+            .putLong("cuaca_waktu", System.currentTimeMillis())
+            .apply()
+    }
+
     /** Latar laci aplikasi: 0 bening, 1 sedang, 2 gelap. */
     var beningLaci: Int
         get() = prefs.getInt("bening_laci", 1).coerceIn(0, 2)

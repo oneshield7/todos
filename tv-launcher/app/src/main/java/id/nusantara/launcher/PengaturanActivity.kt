@@ -148,6 +148,37 @@ class PengaturanActivity : Activity() {
             simpanan.lirik = !simpanan.lirik
             isi(8)
         }
+        val layarIstirahat = packageName + "/" + LayarIstirahat::class.java.name
+        val screensaverAktif = try {
+            (Settings.Secure.getString(contentResolver, "screensaver_components") ?: "").contains(LayarIstirahat::class.java.simpleName)
+        } catch (e: Exception) {
+            false
+        }
+        baris(
+            "Screensaver",
+            "Latar daerah dan cuaca dengan jam, tampil saat TV diam. Dipilih lewat pengaturan screensaver TV.",
+            if (screensaverAktif) "Aktif" else "Belum dipilih",
+        ) {
+            val terbuka = try {
+                startActivity(Intent(Settings.ACTION_DREAM_SETTINGS))
+                true
+            } catch (e: Exception) {
+                false
+            }
+            if (terbuka) {
+                Toast.makeText(this, "Pilih Nusantara Launcher sebagai screensaver", Toast.LENGTH_LONG).show()
+            } else {
+                AlertDialog.Builder(this)
+                    .setTitle("Layar pilihan screensaver tidak tersedia di TV ini")
+                    .setMessage(
+                        "Screensaver bisa dipilih dari perangkat lain lewat adb:\n\n" +
+                            "adb shell settings put secure screensaver_components " + layarIstirahat + "\n\n" +
+                            "adb shell settings put secure screensaver_enabled 1"
+                    )
+                    .setPositiveButton("Tutup", null)
+                    .show()
+            }
+        }
         baris("Pengaturan TV", "Jaringan, gambar, suara, dan pengaturan sistem lainnya", "") {
             try {
                 startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

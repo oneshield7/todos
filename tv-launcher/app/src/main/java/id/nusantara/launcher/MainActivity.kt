@@ -515,6 +515,7 @@ class MainActivity : Activity() {
                     keterangan.text = hasil.kondisi.label
                     latar.kondisi = hasil.kondisi
                     efekCuaca.kondisi = hasil.kondisi
+                    simpanan.simpanCuaca(hasil)
                     ikon.setel(hasil.kondisi, hasil.siang)
                     warnaiTeks()
                 }

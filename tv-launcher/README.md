@@ -2,7 +2,7 @@
 
 Launcher Android TV yang latarnya mengikuti lokasi dan cuaca. Ditulis dengan Kotlin native, tanpa framework.
 
-## Yang sudah ada di versi 0.6
+## Yang sudah ada di versi 0.7
 
 - Beranda: jam dengan detik, tanggal, suhu, kondisi cuaca, nama kota, dan satu baris aplikasi yang disematkan (paling banyak 8).
 - Laci aplikasi: tombol bawah (atau ubin "Semua aplikasi") menggeser laci naik dari bawah dengan latar tembus pandang; kisi tujuh kolom mengisi lebar layar. Tombol Kembali, atau tombol atas di baris teratas, menutupnya.
@@ -16,6 +16,7 @@ Launcher Android TV yang latarnya mengikuti lokasi dan cuaca. Ditulis dengan Kot
 - Hujan dan kabut tetap tampil di atas latar sampul album.
 - Gelombang mengikuti suara (pilihan, mati secara bawaan): garis gelombang bergerak mengikuti keras-pelan dan tinggi-rendah suara. Android mewajibkan izin rekam audio untuk membaca suara keluaran; mikrofon tidak dipakai dan suara tidak disimpan.
 - Lirik lagu (pilihan, mati secara bawaan): lima baris lirik di sisi kanan beranda, baris yang sedang dinyanyikan disorot.
+- Screensaver: latar daerah dan cuaca tanpa aplikasi, dengan jam, tanggal, dan cuaca yang berpindah sudut tiap dua menit. Dipilih lewat pengaturan screensaver TV (ada pintasan di Pengaturan launcher).
 - Bunyi saat berpindah dan memilih ubin.
 - Latar bergambar untuk DK Jakarta (Monas), Jawa Barat, DI Yogyakarta (Prambanan), Bali, Sumatera Selatan, Kalimantan Selatan, Sulawesi Selatan, dan Papua Pegunungan. Provinsi lain memakai bentang alam umum (pegunungan, pesisir, atau perkotaan).
 - Langit berganti menurut jam (pagi, siang, senja, malam) dan cuaca; awan bergumpal, hujan, kabut, dan kilat beranimasi.
@@ -29,7 +30,7 @@ Launcher Android TV yang latarnya mengikuti lokasi dan cuaca. Ditulis dengan Kot
 
 ## Yang belum ada
 
-Screensaver, mode redup, wallpaper foto sendiri, mengatur urutan aplikasi di beranda, dan gambar ikon untuk 30 provinsi lainnya.
+Mode redup, wallpaper foto sendiri, mengatur urutan aplikasi di beranda, dan gambar ikon untuk 30 provinsi lainnya.
 
 ## Tanda tangan APK
 
