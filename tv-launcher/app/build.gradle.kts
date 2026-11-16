@@ -13,13 +13,29 @@ android {
         applicationId = "id.nusantara.launcher"
         minSdk = 23
         targetSdk = 34
-        versionCode = 7
-        versionName = "0.6.0"
+        versionCode = 8
+        versionName = "0.6.1"
+    }
+
+    // Kunci tanda tangan tetap, supaya versi baru bisa dipasang menimpa versi lama.
+    // Ini kunci uji yang ikut tersimpan di repositori (bukan rahasia); sebelum dibagikan
+    // ke banyak orang, ganti dengan kunci pribadi yang disimpan di GitHub Secrets.
+    signingConfigs {
+        create("uji") {
+            storeFile = file("kunci-uji.keystore")
+            storePassword = "nusantara-uji"
+            keyAlias = "uji"
+            keyPassword = "nusantara-uji"
+        }
     }
 
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("uji")
+        }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("uji")
         }
     }
 

@@ -607,22 +607,31 @@ class MainActivity : Activity() {
             kunciLirik = kunci
             lirikView.pasang(null)
             lirikView.visibility = View.GONE
-            if (kunci.isNotEmpty()) muatLirik(kunci, pemantau.judul, pemantau.artis, pemantau.durasi)
+            if (kunci.isNotEmpty()) {
+                lirikView.keterangan("Mencari lirik")
+                lirikView.visibility = View.VISIBLE
+                muatLirik(kunci, pemantau.judul, pemantau.artis, pemantau.durasi)
+            }
         }
     }
 
     private fun muatLirik(kunci: String, judul: String, artis: String, durasi: Long) {
         pekerja.execute {
+            var galat = ""
             val hasil = try {
                 PustakaLirik.ambil(judul, artis, durasi)
             } catch (e: Exception) {
+                galat = e.javaClass.simpleName + (if (e.message.isNullOrBlank()) "" else ": " + e.message)
                 null
             }
             runOnUiThread {
                 // lagu bisa sudah berganti selama lirik dicari
-                if (kunci == kunciLirik && hasil != null) {
-                    lirikView.pasang(hasil)
-                    lirikView.visibility = View.VISIBLE
+                if (kunci != kunciLirik) return@runOnUiThread
+                when {
+                    hasil != null -> lirikView.pasang(hasil)
+                    // keterangan dibiarkan tampil supaya jelas kenapa lirik tidak muncul
+                    galat.isNotEmpty() -> lirikView.keterangan("Layanan lirik tidak bisa dihubungi ($galat)")
+                    else -> lirikView.keterangan("Lirik lagu ini tidak ditemukan di LRCLIB")
                 }
             }
         }

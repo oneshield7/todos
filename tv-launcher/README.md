@@ -31,6 +31,10 @@ Launcher Android TV yang latarnya mengikuti lokasi dan cuaca. Ditulis dengan Kot
 
 Screensaver, mode redup, wallpaper foto sendiri, mengatur urutan aplikasi di beranda, dan gambar ikon untuk 30 provinsi lainnya.
 
+## Tanda tangan APK
+
+APK ditandatangani dengan kunci uji `app/kunci-uji.keystore` yang ikut tersimpan di repositori, sehingga versi baru bisa dipasang menimpa versi lama tanpa menghapusnya dulu. Kunci ini bukan rahasia. Sebelum APK dibagikan ke banyak orang, ganti dengan kunci pribadi yang disimpan di GitHub Secrets; pergantian kunci mengharuskan pengguna menghapus versi lama satu kali.
+
 ## Merakit APK
 
 GitHub Actions merakit APK tiap kali ada perubahan di folder ini (alur kerja `Rakit APK launcher TV`). Hasilnya ada di halaman Actions, bagian Artifacts, dengan nama `nusantara-launcher-debug`.

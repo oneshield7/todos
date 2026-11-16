@@ -147,6 +147,15 @@ class LirikView(context: Context, private val u: Float, private val pemantau: Pe
         }
     }
 
+    /** Menampilkan satu baris keterangan sebagai ganti lirik: sedang mencari, tidak ditemukan, atau gagal. */
+    fun keterangan(isi: String) {
+        lirik = null
+        indeksTampil = Int.MIN_VALUE
+        removeCallbacks(detak)
+        for (t in barisTeks) t.text = ""
+        sumber.text = isi
+    }
+
     /** Dipanggil saat beranda tampil atau disembunyikan, supaya tidak bekerja di latar. */
     fun jalankan(aktif: Boolean) {
         berjalan = aktif
