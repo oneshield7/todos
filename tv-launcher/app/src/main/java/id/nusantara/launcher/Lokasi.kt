@@ -122,6 +122,20 @@ class Simpanan(context: Context) {
             prefs.edit().putBoolean("tanya_musik", nilai).apply()
         }
 
+    /** Garis gelombang di kartu musik mengikuti suara yang sedang diputar. */
+    var gelombangSuara: Boolean
+        get() = prefs.getBoolean("gelombang_suara", false)
+        set(nilai) {
+            prefs.edit().putBoolean("gelombang_suara", nilai).apply()
+        }
+
+    /** Menampilkan lirik lagu yang sedang diputar. */
+    var lirik: Boolean
+        get() = prefs.getBoolean("lirik", false)
+        set(nilai) {
+            prefs.edit().putBoolean("lirik", nilai).apply()
+        }
+
     /** Latar laci aplikasi: 0 bening, 1 sedang, 2 gelap. */
     var beningLaci: Int
         get() = prefs.getInt("bening_laci", 1).coerceIn(0, 2)

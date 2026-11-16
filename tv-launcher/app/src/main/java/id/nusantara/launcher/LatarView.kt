@@ -48,6 +48,12 @@ class LatarView(context: Context) : View(context) {
             invalidate()
         }
 
+    /**
+     * Hanya menggambar hujan dan kabut di atas latar bening. Dipakai sebagai lapisan
+     * di atas latar musik, supaya cuaca tetap terlihat saat sampul album menjadi latar.
+     */
+    var hanyaEfek = false
+
     /** Animasi cuaca; kalau dimatikan latar digambar sebagai gambar diam. */
     var animasi = true
 
@@ -215,6 +221,16 @@ class LatarView(context: Context) : View(context) {
         val skala = max(w / 1920f, h / 1080f)
         val dx = (w - 1920f * skala) / 2f
         val dy = (h - 1080f * skala) / 2f
+        if (hanyaEfek) {
+            canvas.save()
+            canvas.translate(dx, dy)
+            canvas.scale(skala, skala)
+            if (kondisi == Kondisi.KABUT) gambarKabut(canvas, t)
+            if (kondisi.hujan) gambarHujan(canvas, t)
+            canvas.restore()
+            if (animasi && aktif && (kondisi.hujan || kondisi == Kondisi.KABUT)) postInvalidateDelayed(33)
+            return
+        }
         siapkan()
 
         canvas.save()

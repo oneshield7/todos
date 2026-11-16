@@ -2,7 +2,9 @@ package id.nusantara.launcher
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
@@ -80,6 +82,14 @@ class MainActivity : Activity() {
     private lateinit var tiraiMusik: View
     private var sampulLatar: Bitmap? = null
     private var latarMusikTampil = false
+    private lateinit var efekCuaca: LatarView
+    private lateinit var lirikView: LirikView
+    private val analis = PenganalisisSuara()
+    private var kunciLirik = ""
+    private var berandaTampil = false
+
+    /** Benar bila TV menolak pembacaan suara; tidak dicoba lagi sampai beranda dibuka ulang. */
+    private var suaraGagal = false
 
     /** Berdetak tepat di pergantian detik. */
     private val detak = object : Runnable {
@@ -137,6 +147,12 @@ class MainActivity : Activity() {
         lapisMusik.alpha = 0f
         akar.addView(lapisMusik, FrameLayout.LayoutParams(penuh, penuh))
 
+        // Hujan dan kabut tetap digambar di atas latar musik
+        efekCuaca = LatarView(this)
+        efekCuaca.hanyaEfek = true
+        efekCuaca.visibility = View.GONE
+        akar.addView(efekCuaca, FrameLayout.LayoutParams(penuh, penuh))
+
         // Kiri atas: jam dengan detik kecil, lalu tanggal
         val kiri = LinearLayout(this)
         kiri.orientation = LinearLayout.VERTICAL
@@ -186,6 +202,14 @@ class MainActivity : Activity() {
         akar.addView(kartuMusik, FrameLayout.LayoutParams(px(800f), isi, Gravity.TOP or Gravity.START).apply {
             leftMargin = px(96f)
             topMargin = px(300f)
+        })
+
+        // Kanan tengah: lirik lagu, bila dinyalakan dan tersedia
+        lirikView = LirikView(this, u, pemantau)
+        lirikView.visibility = View.GONE
+        akar.addView(lirikView, FrameLayout.LayoutParams(px(824f), isi, Gravity.TOP or Gravity.START).apply {
+            leftMargin = px(1000f)
+            topMargin = px(262f)
         })
 
         // Bawah: satu baris ubin, dengan petunjuk kecil di bawahnya
@@ -261,7 +285,11 @@ class MainActivity : Activity() {
 
     override fun onStart() {
         super.onStart()
-        latar.aktif = true
+        berandaTampil = true
+        suaraGagal = false
+        latar.aktif = !latarMusikTampil
+        efekCuaca.aktif = latarMusikTampil
+        lirikView.jalankan(true)
         terapkanPengaturan()
         terapkanLokasi()
         penangan.post(detak)
@@ -273,7 +301,11 @@ class MainActivity : Activity() {
 
     override fun onStop() {
         super.onStop()
+        berandaTampil = false
         latar.aktif = false
+        efekCuaca.aktif = false
+        lirikView.jalankan(false)
+        analis.berhenti()
         pemantau.berhenti()
         penangan.removeCallbacks(detak)
     }
@@ -377,6 +409,7 @@ class MainActivity : Activity() {
     /** Pilihan dari layar pengaturan: animasi, bunyi, dan seberapa bening laci aplikasi. */
     private fun terapkanPengaturan() {
         latar.animasi = simpanan.animasi
+        efekCuaca.animasi = simpanan.animasi
         Bunyi.aktif = simpanan.bunyi
         val tingkat = simpanan.beningLaci
         // Sedikit gelap selalu dipertahankan supaya judul dan nama aplikasi tetap terbaca
@@ -481,6 +514,7 @@ class MainActivity : Activity() {
                     suhu.text = hasil.suhu.toString() + "°"
                     keterangan.text = hasil.kondisi.label
                     latar.kondisi = hasil.kondisi
+                    efekCuaca.kondisi = hasil.kondisi
                     ikon.setel(hasil.kondisi, hasil.siang)
                     warnaiTeks()
                 }
@@ -544,8 +578,53 @@ class MainActivity : Activity() {
         }
         if (pakaiLatar != latarMusikTampil) {
             latarMusikTampil = pakaiLatar
-            lapisMusik.animate().alpha(if (pakaiLatar) 1f else 0f).setDuration(500).start()
+            efekCuaca.visibility = if (pakaiLatar) View.VISIBLE else View.GONE
+            efekCuaca.aktif = pakaiLatar && berandaTampil
+            if (pakaiLatar) {
+                // latar daerah berhenti digambar setelah tertutup sampul, supaya TV tidak bekerja sia-sia
+                lapisMusik.animate().alpha(1f).setDuration(500)
+                    .withEndAction { if (latarMusikTampil) latar.aktif = false }.start()
+            } else {
+                latar.aktif = berandaTampil
+                lapisMusik.animate().alpha(0f).setDuration(500).withEndAction(null).start()
+            }
             warnaiTeks()
+        }
+
+        // Garis gelombang mengikuti suara, bila dinyalakan dan diizinkan
+        val pakaiSuara = tampil && pemantau.memutar && simpanan.gelombangSuara &&
+            checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        if (pakaiSuara && !suaraGagal) {
+            if (!analis.mulai()) suaraGagal = true
+        } else if (analis.berjalan) {
+            analis.berhenti()
+        }
+        kartuMusik.pitaSuara(if (analis.berjalan) analis.pita else null)
+
+        // Lirik: dicari ulang hanya saat lagunya berganti
+        val kunci = if (tampil && simpanan.lirik) pemantau.judul + "|" + pemantau.artis else ""
+        if (kunci != kunciLirik) {
+            kunciLirik = kunci
+            lirikView.pasang(null)
+            lirikView.visibility = View.GONE
+            if (kunci.isNotEmpty()) muatLirik(kunci, pemantau.judul, pemantau.artis, pemantau.durasi)
+        }
+    }
+
+    private fun muatLirik(kunci: String, judul: String, artis: String, durasi: Long) {
+        pekerja.execute {
+            val hasil = try {
+                PustakaLirik.ambil(judul, artis, durasi)
+            } catch (e: Exception) {
+                null
+            }
+            runOnUiThread {
+                // lagu bisa sudah berganti selama lirik dicari
+                if (kunci == kunciLirik && hasil != null) {
+                    lirikView.pasang(hasil)
+                    lirikView.visibility = View.VISIBLE
+                }
+            }
         }
     }
 

@@ -1,8 +1,10 @@
 package id.nusantara.launcher
 
+import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -123,6 +125,29 @@ class PengaturanActivity : Activity() {
             simpanan.latarMusik = !simpanan.latarMusik
             isi(6)
         }
+        val izinSuara = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        val suaraNyala = simpanan.gelombangSuara && izinSuara
+        baris(
+            "Gelombang mengikuti suara",
+            "Garis gelombang di kartu musik bergerak mengikuti keras-pelan dan tinggi-rendah suara. Android mewajibkan izin rekam audio untuk ini; suara tidak direkam atau dikirim.",
+            nyala(suaraNyala),
+        ) {
+            when {
+                suaraNyala -> {
+                    simpanan.gelombangSuara = false
+                    isi(7)
+                }
+                izinSuara -> {
+                    simpanan.gelombangSuara = true
+                    isi(7)
+                }
+                else -> requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MINTA_SUARA)
+            }
+        }
+        baris("Lirik lagu", "Menampilkan lirik di sisi kanan beranda. Judul dan artis lagu dikirim ke layanan lirik LRCLIB untuk mencarinya.", nyala(simpanan.lirik)) {
+            simpanan.lirik = !simpanan.lirik
+            isi(8)
+        }
         baris("Pengaturan TV", "Jaringan, gambar, suara, dan pengaturan sistem lainnya", "") {
             try {
                 startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -186,7 +211,17 @@ class PengaturanActivity : Activity() {
         )
     }
 
+    override fun onRequestPermissionsResult(kode: Int, izin: Array<out String>, hasil: IntArray) {
+        super.onRequestPermissionsResult(kode, izin, hasil)
+        if (kode != MINTA_SUARA) return
+        val diberi = hasil.isNotEmpty() && hasil[0] == PackageManager.PERMISSION_GRANTED
+        simpanan.gelombangSuara = diberi
+        if (!diberi) Toast.makeText(this, "Izin tidak diberikan; gelombang memakai gerakan bawaan", Toast.LENGTH_LONG).show()
+        isi(7)
+    }
+
     companion object {
+        private const val MINTA_SUARA = 11
         val NAMA_BENING = arrayOf("Bening", "Sedang", "Gelap")
     }
 }

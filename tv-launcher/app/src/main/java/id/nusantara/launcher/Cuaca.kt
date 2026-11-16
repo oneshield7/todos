@@ -25,8 +25,9 @@ data class Cuaca(val suhu: Int, val kondisi: Kondisi, val siang: Boolean)
 /** Mengambil cuaca dan mencari lokasi dari Open-Meteo (gratis, tanpa kunci API). */
 object Layanan {
 
-    private fun ambil(alamat: String): String {
+    fun ambil(alamat: String, agen: String? = null): String {
         val sambungan = URL(alamat).openConnection() as HttpURLConnection
+        if (agen != null) sambungan.setRequestProperty("User-Agent", agen)
         sambungan.connectTimeout = 10_000
         sambungan.readTimeout = 10_000
         try {

@@ -16,6 +16,7 @@ import android.graphics.Rect
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaMetadata
+import android.media.audiofx.Visualizer
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
@@ -37,7 +38,9 @@ import java.util.Locale
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.pow
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * Android hanya mengizinkan aplikasi melihat musik yang diputar aplikasi lain bila pengguna
@@ -275,7 +278,80 @@ class SkemaMusik(val wadah: Int, val utama: Int, val diUtama: Int, val tirai: In
     }
 }
 
-/** Garis progres bergelombang: bagian yang sudah diputar bergelombang, sisanya lurus. */
+/**
+ * Membaca kekuatan suara yang sedang keluar dari TV, per pita frekuensi (rendah ke tinggi).
+ * Android mewajibkan izin "rekam audio" untuk ini walau mikrofon tidak dipakai;
+ * datanya hanya dipakai untuk menggerakkan garis gelombang dan tidak disimpan.
+ */
+class PenganalisisSuara {
+
+    /** Kekuatan tiap pita, 0 sampai 1, sudah dihaluskan. */
+    val pita = FloatArray(24)
+
+    private var visualizer: Visualizer? = null
+
+    val berjalan: Boolean
+        get() = visualizer != null
+
+    fun mulai(): Boolean {
+        if (visualizer != null) return true
+        return try {
+            val v = Visualizer(0)
+            val rentang = Visualizer.getCaptureSizeRange()
+            v.captureSize = 512.coerceIn(rentang[0], rentang[1])
+            v.setDataCaptureListener(object : Visualizer.OnDataCaptureListener {
+                override fun onWaveFormDataCapture(sumber: Visualizer?, data: ByteArray?, laju: Int) {}
+
+                override fun onFftDataCapture(sumber: Visualizer?, fft: ByteArray?, laju: Int) {
+                    if (fft != null) olah(fft)
+                }
+            }, Visualizer.getMaxCaptureRate(), false, true)
+            v.enabled = true
+            visualizer = v
+            true
+        } catch (e: Throwable) {
+            // TV tidak mengizinkan atau tidak mendukung pembacaan suara keluaran
+            false
+        }
+    }
+
+    fun berhenti() {
+        try {
+            visualizer?.enabled = false
+            visualizer?.release()
+        } catch (e: Throwable) {
+            // sudah dilepas
+        }
+        visualizer = null
+        pita.fill(0f)
+    }
+
+    private fun olah(fft: ByteArray) {
+        val bin = fft.size / 2
+        if (bin < 8) return
+        for (i in pita.indices) {
+            // pita dibagi secara logaritmik: nada rendah mendapat pita sempit, nada tinggi lebar
+            val awal = (bin - 1).toDouble().pow(i / pita.size.toDouble()).toInt().coerceIn(1, bin - 1)
+            val akhir = (bin - 1).toDouble().pow((i + 1) / pita.size.toDouble()).toInt().coerceIn(awal + 1, bin)
+            var puncak = 0f
+            for (k in awal until akhir) {
+                val nyata = fft[2 * k].toFloat()
+                val khayal = fft[2 * k + 1].toFloat()
+                val besar = sqrt(nyata * nyata + khayal * khayal)
+                if (besar > puncak) puncak = besar
+            }
+            val nilai = sqrt((puncak / 90f).coerceIn(0f, 1f))
+            // naik cepat, turun pelan, supaya gerakannya tidak berkedip
+            pita[i] += (nilai - pita[i]) * (if (nilai > pita[i]) 0.7f else 0.22f)
+        }
+    }
+}
+
+/**
+ * Garis progres bergelombang: bagian yang sudah diputar bergelombang, sisanya lurus.
+ * Tinggi gelombang mengikuti suara bila [pita] diisi; tanpa itu gelombang tetap
+ * naik-turun dengan pola buatan supaya tidak rata.
+ */
 class GelombangView(context: Context) : View(context) {
 
     var kemajuan = 0f
@@ -290,23 +366,41 @@ class GelombangView(context: Context) : View(context) {
         }
     var warna = Color.WHITE
 
+    /** Kekuatan tiap pita frekuensi dari PenganalisisSuara; null berarti tidak ada data suara. */
+    var pita: FloatArray? = null
+
     private val kuas = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
     }
     private val jalur = Path()
+
+    /** Tinggi gelombang di titik x: nada rendah di kiri, nada tinggi di kanan. */
+    private fun tinggi(x: Float, lebar: Float, h: Float, t: Float): Float {
+        val p = pita
+        if (p != null && p.size >= 2) {
+            val posisi = (x / lebar).coerceIn(0f, 1f) * (p.size - 1)
+            val i = posisi.toInt().coerceAtMost(p.size - 2)
+            val sisa = posisi - i
+            val kuat = p[i] * (1f - sisa) + p[i + 1] * sisa
+            return h * (0.04f + 0.4f * kuat)
+        }
+        return h * (0.1f + 0.2f * (0.5f + 0.5f * sin(x / 170f + t * 1.7f)) * (0.55f + 0.45f * sin(x / 61f - t * 2.3f)))
+    }
 
     override fun onDraw(canvas: Canvas) {
         val w = width.toFloat()
         val h = height.toFloat()
         if (w <= 0f || h <= 0f) return
-        val tebal = h * 0.16f
+        val tebal = h * 0.11f
         val tepi = tebal
+        val lebar = w - tepi * 2f
         val tengah = h / 2f
-        val batas = tepi + (w - tepi * 2f) * kemajuan
-        val tinggiGelombang = if (memutar) h * 0.2f else 0f
-        val panjang = h * 1.7f
-        val fase = if (memutar) (SystemClock.uptimeMillis() % 1400L) / 1400f * 2f * PI.toFloat() else 0f
+        val batas = tepi + lebar * kemajuan
+        val panjang = h * 1.1f
+        val t = (SystemClock.uptimeMillis() % 600_000L) / 1000f
+        val fase = if (memutar) t * 4.5f else 0f
 
         kuas.strokeWidth = tebal
         kuas.color = warna
@@ -316,17 +410,20 @@ class GelombangView(context: Context) : View(context) {
         kuas.alpha = 255
         jalur.reset()
         var x = tepi
-        jalur.moveTo(x, tengah + tinggiGelombang * sin(x / panjang * 2f * PI.toFloat() - fase))
-        while (x < batas) {
-            x += 4f
-            val xx = if (x > batas) batas else x
-            jalur.lineTo(xx, tengah + tinggiGelombang * sin(xx / panjang * 2f * PI.toFloat() - fase))
+        var pertama = true
+        while (true) {
+            val amplitudo = if (memutar) tinggi(x - tepi, lebar, h, t) else 0f
+            val y = tengah + amplitudo * sin(x / panjang * 2f * PI.toFloat() - fase)
+            if (pertama) jalur.moveTo(x, y) else jalur.lineTo(x, y)
+            pertama = false
+            if (x >= batas) break
+            x = if (x + 3f > batas) batas else x + 3f
         }
         canvas.drawPath(jalur, kuas)
 
         // penanda posisi
         kuas.strokeWidth = tebal * 1.3f
-        canvas.drawLine(batas, h * 0.14f, batas, h * 0.86f, kuas)
+        canvas.drawLine(batas, h * 0.22f, batas, h * 0.78f, kuas)
 
         if (memutar) postInvalidateDelayed(33)
     }
@@ -490,7 +587,7 @@ class KartuMusik(context: Context, private val u: Float, private val pemantau: P
         kanan.addView(keterangan, LayoutParams(penuh, isi))
         kanan.addView(judul, LayoutParams(penuh, isi).apply { topMargin = px(8f) })
         kanan.addView(artis, LayoutParams(penuh, isi).apply { topMargin = px(4f) })
-        kanan.addView(gelombang, LayoutParams(penuh, px(30f)).apply { topMargin = px(14f) })
+        kanan.addView(gelombang, LayoutParams(penuh, px(52f)).apply { topMargin = px(6f) })
 
         val bawah = LinearLayout(context)
         bawah.orientation = HORIZONTAL
@@ -523,6 +620,11 @@ class KartuMusik(context: Context, private val u: Float, private val pemantau: P
         kanan.addView(bawah, LayoutParams(penuh, isi).apply { topMargin = px(4f) })
 
         addView(kanan, LayoutParams(0, isi, 1f).apply { leftMargin = px(28f) })
+    }
+
+    /** Data suara untuk garis gelombang; null bila tidak tersedia. */
+    fun pitaSuara(pita: FloatArray?) {
+        gelombang.pita = pita
     }
 
     /** Dipanggil saat lagu, sampul, atau status putar berubah. */

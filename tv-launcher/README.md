@@ -2,7 +2,7 @@
 
 Launcher Android TV yang latarnya mengikuti lokasi dan cuaca. Ditulis dengan Kotlin native, tanpa framework.
 
-## Yang sudah ada di versi 0.5
+## Yang sudah ada di versi 0.6
 
 - Beranda: jam dengan detik, tanggal, suhu, kondisi cuaca, nama kota, dan satu baris aplikasi yang disematkan (paling banyak 8).
 - Laci aplikasi: tombol bawah (atau ubin "Semua aplikasi") menggeser laci naik dari bawah dengan latar tembus pandang; kisi tujuh kolom mengisi lebar layar. Tombol Kembali, atau tombol atas di baris teratas, menutupnya.
@@ -13,6 +13,9 @@ Launcher Android TV yang latarnya mengikuti lokasi dan cuaca. Ditulis dengan Kot
 - Layar Pengaturan launcher (ubin di beranda, ubin di ujung laci aplikasi, atau tombol Menu di remote): lokasi, beranda utama atau kembali ke launcher bawaan, animasi cuaca, bunyi navigasi, tingkat bening laci aplikasi, dan pintasan ke Pengaturan TV.
 - Tombol remote Menu, Pengaturan, Input, dan Semua aplikasi diteruskan ke fungsi yang sesuai. Tombol lain yang belum punya fungsi memunculkan pesan berisi nama tombolnya, sebagai bantuan selama masa uji.
 - Musik yang sedang diputar: kartu di beranda berisi sampul, judul, artis, garis progres bergelombang, dan tombol sebelumnya, putar atau jeda, dan berikutnya. Warna kartu mengikuti sampul album, dan latar beranda berganti menjadi sampul yang diburamkan selama lagu berjalan. Perlu izin akses notifikasi, yang diberikan pengguna sendiri.
+- Hujan dan kabut tetap tampil di atas latar sampul album.
+- Gelombang mengikuti suara (pilihan, mati secara bawaan): garis gelombang bergerak mengikuti keras-pelan dan tinggi-rendah suara. Android mewajibkan izin rekam audio untuk membaca suara keluaran; mikrofon tidak dipakai dan suara tidak disimpan.
+- Lirik lagu (pilihan, mati secara bawaan): lima baris lirik di sisi kanan beranda, baris yang sedang dinyanyikan disorot.
 - Bunyi saat berpindah dan memilih ubin.
 - Latar bergambar untuk DK Jakarta (Monas), Jawa Barat, DI Yogyakarta (Prambanan), Bali, Sumatera Selatan, Kalimantan Selatan, Sulawesi Selatan, dan Papua Pegunungan. Provinsi lain memakai bentang alam umum (pegunungan, pesisir, atau perkotaan).
 - Langit berganti menurut jam (pagi, siang, senja, malam) dan cuaca; awan bergumpal, hujan, kabut, dan kilat beranimasi.
@@ -21,6 +24,7 @@ Launcher Android TV yang latarnya mengikuti lokasi dan cuaca. Ditulis dengan Kot
 ## Layanan luar yang dihubungi
 
 - `api.open-meteo.com` dan `geocoding-api.open-meteo.com`: cuaca dan pencarian lokasi.
+- `lrclib.net`: lirik lagu. Judul dan artis lagu yang sedang diputar dikirim ke layanan ini. Hanya dihubungi bila "Lirik lagu" dinyalakan.
 - `ipwho.is`, dengan cadangan `get.geojs.io`: deteksi lokasi otomatis. Layanan ini melihat alamat internet TV. Hanya dihubungi bila pengguna memilih "Deteksi otomatis".
 
 ## Yang belum ada
