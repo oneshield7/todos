@@ -601,6 +601,23 @@ class MainActivity : Activity() {
         }
         kartuMusik.pitaSuara(if (analis.berjalan) analis.pita else null)
 
+        // Lirik mati secara bawaan; ditawarkan sekali saat ada lagu yang tampil
+        if (tampil && berandaTampil && !simpanan.lirik && !simpanan.sudahTanyaLirik && !isFinishing) {
+            simpanan.sudahTanyaLirik = true
+            AlertDialog.Builder(this)
+                .setTitle("Tampilkan lirik lagu?")
+                .setMessage(
+                    "Lirik ditampilkan di sisi kanan beranda saat musik diputar. Untuk mencarinya, judul dan artis lagu " +
+                        "dikirim ke layanan lirik LRCLIB. Bisa dimatikan kapan saja di Pengaturan launcher."
+                )
+                .setPositiveButton("Tampilkan") { _, _ ->
+                    simpanan.lirik = true
+                    perbaruiMusik()
+                }
+                .setNegativeButton("Tidak", null)
+                .show()
+        }
+
         // Lirik: dicari ulang hanya saat lagunya berganti
         val kunci = if (tampil && simpanan.lirik) pemantau.judul + "|" + pemantau.artis else ""
         if (kunci != kunciLirik) {

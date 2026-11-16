@@ -136,6 +136,13 @@ class Simpanan(context: Context) {
             prefs.edit().putBoolean("lirik", nilai).apply()
         }
 
+    /** Benar setelah pengguna pernah ditawari menampilkan lirik. */
+    var sudahTanyaLirik: Boolean
+        get() = prefs.getBoolean("tanya_lirik", false)
+        set(nilai) {
+            prefs.edit().putBoolean("tanya_lirik", nilai).apply()
+        }
+
     /** Latar laci aplikasi: 0 bening, 1 sedang, 2 gelap. */
     var beningLaci: Int
         get() = prefs.getInt("bening_laci", 1).coerceIn(0, 2)
